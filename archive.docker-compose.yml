@@ -1,0 +1,20 @@
+services:
+
+  code-server:
+    container_name: code-server
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: ${TIMEZONE}
+      PROXY_DOMAIN: ${CODE_PROXY_DOMAIN}
+    image: lscr.io/linuxserver/code-server:latest
+    ports:
+      - 8443:8443
+    restart: unless-stopped
+    volumes:
+      - code-server:/config
+      - ~:/mnt/home
+
+volumes:
+  code-server:
+    external: true
