@@ -1,0 +1,39 @@
+services:
+
+  postgres:
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    image: postgres:14.5
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+
+  postgres-exporter:
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/postgres?sslmode=disable"
+    image: quay.io/prometheuscommunity/postgres-exporter
+    restart: unless-stopped
+    ports:
+      - 9187:9187
+
+  pgadmin:
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:-admin@example.com}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:-admin}"
+    image: dpage/pgadmin4
+    ports:
+      - 8081:80
+    restart: unless-stopped
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+
+volumes:
+  pgadmin:
+    external: true
