@@ -1,0 +1,58 @@
+services:
+
+  kuma:
+    container_name: kuma
+    image: louislam/uptime-kuma
+    ports:
+      - 3001:3001
+    volumes:
+      - ~/appdata/kuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  n8n:
+    container_name: n8n
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_LOGIN}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD}
+      N8N_METRICS: "true"
+      N8N_PROTOCOL: https
+      N8N_SSL_KEY: ${SSL_KEY}
+      N8N_SSL_CERT: ${SSL_CERT}
+      GENERIC_TIMEZONE: ${TIMEZONE}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+    image: n8nio/n8n
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./n8n:/home/node/.n8n
+      - ${SSL_CERT}:${SSL_CERT}
+      - ${SSL_KEY}:${SSL_KEY}
+
+  watchtower:
+    command: --interval 60
+    container_name: watchtower
+    environment:
+      TZ: ${TIMEZONE}
+      WATCHTOWER_HTTP_API_METRICS: "true"
+      WATCHTOWER_HTTP_API_TOKEN: ${WATCHTOWER_HTTP_API_TOKEN}
+      WATCHTOWER_CLEANUP: "true"
+    image: containrrr/watchtower
+    restart: unless-stopped
+    ports:
+      - 7080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+
+  wg-api:
+    cap_add:
+      - "NET_ADMIN"
+    command: wg-api --device=wg0 --listen=0.0.0.0:8082
+    container_name: wg-api
+    environment:
+      WGAPI_TOKENS: ${WGAPI_TOKENS}
+    image: james/wg-api
+    network_mode: host
+    restart: unless-stopped
